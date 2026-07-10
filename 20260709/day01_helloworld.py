@@ -133,3 +133,32 @@ if not data:
 # 15. input 输入
 name = input("请输入你的名字：")
 print(f"你好，{name}")
+
+
+# 16. 今天最重要的 Java 到 Python 对照表
+# Java	Python
+# String	str
+# int / long	int
+# double / BigDecimal	float / Decimal
+# boolean	bool
+# null	None
+# true / false	True / False
+# &&	and
+# `
+# !	not
+# else if	elif
+# {} 代码块	缩进
+# System.out.println()	print()
+# for(int i=0;i<n;i++)	for i in range(n)
+# method()	def function()
+
+# 1. Python 靠缩进表示代码块
+# 2. True / False / None 首字母大写
+# 3. Python 没有 ++
+# 4. for i in range(n) 对应 Java for 循环
+# 5. enumerate 用来同时拿下标和值
+# 6. f-string 是最常用字符串格式化方式
+# 7. 函数用 def 定义
+# 8. 类型标注建议从一开始就写
+# 9. None 判断用 is None
+# 10. if __name__ == "__main__" 类似程序入口
