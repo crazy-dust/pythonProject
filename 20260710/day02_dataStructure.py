@@ -344,11 +344,34 @@ print(a)
 print(b)
 
 # 14. 重要坑：不要用可变对象做默认参数 看似没问题，但会有隐藏 bug。
+# Python 的默认参数不是每次调用函数时重新创建，而是在函数定义时只创建一次。所以这个 [] 会被多次调用共享。
+# 实际上不是。这个默认列表只创建一次，后面一直复用。
+# Python 就创建了一个列表对象，并把它保存在函数对象内部。
+# print(add_order.__defaults__)
+# 用 Java 思维理解：它的效果有点像你在 Java 里把一个 List 放成静态共享变量；虽然 Python 默认参数不完全等同于 Java 的 static，但从“共享同一个对象”的效果看，可以这样理解。
 def add_order(order_no: str, order_nos: list[str] = []) -> list[str]:
     order_nos.append(order_no)
     return order_nos
 
 # 正确写法：
+# 为什么 None 写法就安全，每次不传 order_nos 时：  if order_nos is None: order_nos = []
+# 为什么数字、字符串做默认参数没问题？
+# 因为这些是不可变对象：int; float; str; bool; None; tuple；函数内部不能直接修改原对象本身。
+
+# 而这些是可变对象，通常不能直接作为默认值：list; dict; set; 自定义的可变对象
+# 默认参数在定义时求值一次；list、dict、set 会被共享，所以用 None 作为哨兵值，在函数内部重新创建。
+
+# tuple 为什么通常可以
+# def process(statuses: tuple[str, ...] = ("PAID", "SHIPPED")):
+#     pass
+# 这是安全的，因为 tuple 不可变，无法执行：
+# statuses.append("CANCELLED")
+# 但是要注意，如果 tuple 内部装了可变对象，仍可能有问题：
+# def test(data: tuple[list[str]] = ([],)):
+#     data[0].append("A001")
+#     return data
+# 虽然 tuple 本身不能修改，但里面的 list 可以修改。
+
 def add_order(order_no: str, order_nos: list[str] | None = None) -> list[str]:
     if order_nos is None:
         order_nos = []
