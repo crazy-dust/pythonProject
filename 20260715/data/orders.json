@@ -1,0 +1,30 @@
+[
+    {
+        "order_no": " A001 ",
+        "sku": " sku001 ",
+        "price": "100.00",
+        "quantity": "2",
+        "status": "paid"
+    },
+    {
+        "order_no": "A002",
+        "sku": "SKU002",
+        "price": "300.50",
+        "quantity": 1,
+        "status": "UNPAID"
+    },
+    {
+        "order_no": "",
+        "sku": "SKU003",
+        "price": "90.00",
+        "quantity": 3,
+        "status": "PAID"
+    },
+    {
+        "order_no": "A004",
+        "sku": null,
+        "price": "abc",
+        "quantity": "2",
+        "status": "PAID"
+    }
+]

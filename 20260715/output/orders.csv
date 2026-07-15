@@ -1,0 +1,3 @@
+﻿order_no,sku,amount,status
+A001,SKU001,200.00,PAID
+A002,SKU002,300.00,UNPAID
