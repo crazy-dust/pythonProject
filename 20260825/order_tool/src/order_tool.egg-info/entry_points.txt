@@ -1,0 +1,2 @@
+[console_scripts]
+order-tool = order_tool.cli:main

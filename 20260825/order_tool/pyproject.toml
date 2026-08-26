@@ -1,0 +1,146 @@
+[project]
+name = "order-tool"
+version = "0.1.0"
+description = "订单 JSON 清洗并导出 CSV 的命令行工具"
+requires-python = ">=3.14"
+
+dependencies = []
+
+[project.scripts]
+order-tool = "order_tool.cli:main"
+
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+
+#这几段分别是什么意思：
+#配置	作用
+#[project]	                    项目基本信息
+#name	                        安装包名称
+#version	                        当前版本
+#requires-python	Python          版本要求
+#dependencies	                第三方依赖
+#[project.scripts]	            注册命令行命令
+#[build-system]	                指定构建工具
+#[tool.setuptools.packages.find]	告诉 setuptools 包在 src 下
+
+
+#最关键的是这句：
+#
+#[project.scripts]
+#order-tool = "order_tool.cli:main"
+#
+#意思是安装项目后，系统生成一个命令：
+#
+#order-tool
+#
+#执行时，本质调用：
+#
+#from order_tool.cli import main
+#
+#main()
+#
+#所以你以后可以直接：
+#
+#order-tool --input data/orders.json --output output/orders.csv
+#
+#而不一定写：
+#
+#python -m order_tool --input ...
+#
+#然后这一段：
+#
+#[tool.setuptools.packages.find]
+#where = ["src"]
+#
+#是因为你的代码结构是：
+#
+#src/
+#└── order_tool/
+#
+#要告诉 setuptools：
+#
+#去 src 下面寻找 Python 包。
+#
+#否则它不一定能正确找到 order_tool。
+#
+#安装开发版本：
+#
+#python -m pip install -e .
+#
+#这里：
+#
+#-e = editable
+#
+#意思是开发模式安装。
+#
+#比如安装后你修改：
+#
+#src/order_tool/cleaner.py
+#
+#不需要每次重新安装，运行时直接使用最新代码。
+#
+#你可以检查安装结果：
+#
+#python -m pip show order-tool
+#
+#也可以测试：
+#
+#order-tool --help
+#
+#如果 cli.py 里的 argparse 正常，应该显示类似：
+#
+#usage: order-tool [-h] --input INPUT --output OUTPUT [--debug]
+#
+#订单JSON清洗并导出CSV
+#
+#options:
+#  -h, --help       show this help message and exit
+#  --input INPUT    输入JSON文件路径
+#  --output OUTPUT  输出CSV文件路径
+#  --debug           开启DEBUG日志
+#
+#后面我们学 FastAPI、pytest、ruff 等工具后，pyproject.toml 会逐渐变成这种工程配置中心：
+#
+#[project]
+#name = "order-tool"
+#version = "0.1.0"
+#requires-python = ">=3.14"
+#dependencies = [
+#    "fastapi",
+#    "uvicorn",
+#    "sqlalchemy",
+#]
+#
+#[project.optional-dependencies]
+#dev = [
+#    "pytest",
+#    "ruff",
+#    "mypy",
+#]
+#
+#[tool.pytest.ini_options]
+#testpaths = ["tests"]
+#
+#[tool.ruff]
+#line-length = 100
+#
+#[tool.mypy]
+#python_version = "3.14"
+#strict = true
+#
+#所以你可以把它类比成 Java：
+#
+#pom.xml
+#+
+#部分 application/build 配置
+#+
+#部分 Checkstyle/测试工具配置
+#
+#但职责没完全一一对应。
+#
+#对你现在 Day 6 来说，先用上面那份最小版就够了。后面学到依赖管理、测试、代码质量时，我再一步步往这个 pyproject.toml 里加配置。

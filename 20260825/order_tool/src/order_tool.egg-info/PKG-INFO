@@ -1,0 +1,5 @@
+Metadata-Version: 2.4
+Name: order-tool
+Version: 0.1.0
+Summary: 订单 JSON 清洗并导出 CSV 的命令行工具
+Requires-Python: >=3.14

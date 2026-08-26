@@ -50,14 +50,3 @@ class Order:
         return normalize_money(
             self.price * self.quantity
         )
-
-    @classmethod
-    def create_unpaid(cls, order_no: str):
-        return Order(order_no=order_no,
-                     sku='A',
-                     price=Decimal(10),
-                     quantity=2,
-                     status=OrderStatus.PAID)
-
-    def pay(self):
-        print('pay success')
