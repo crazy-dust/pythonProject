@@ -1,0 +1,2 @@
+[console_scripts]
+order-handler-tool = order_handler_tool.cli:main

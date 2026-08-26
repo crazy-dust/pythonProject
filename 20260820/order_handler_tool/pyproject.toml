@@ -1,0 +1,17 @@
+[project]
+name = "order-handler-tool"
+version = "0.1.0"
+description = "订单 JSON 清洗并导出 CSV 的命令行工具"
+requires-python = ">=3.14"
+
+dependencies = []
+
+[project.scripts]
+order-handler-tool = "order_handler_tool.cli:main"
+
+[build-system]
+requires = ["setuptools>=75"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]

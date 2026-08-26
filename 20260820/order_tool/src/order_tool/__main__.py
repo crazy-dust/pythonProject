@@ -12,7 +12,7 @@ if __name__ == "__main__":
 #
 # 然后：
 #
-# python -m order_tool \ --input data/orders.json \ --output output/clean_orders.csv
+# python -m order_tool  --input data/orders.json  --output output/clean_orders.csv
 #
 # python -m order_tool \
 #   --input data/orders.json \
