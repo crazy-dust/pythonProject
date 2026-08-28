@@ -1321,11 +1321,11 @@ class OrderNumberIterator:
 #     for raw_order in raw_orders
 # )
 #
-# valid_orders = (
-#     order
-#     for order in clean_orders
-#     if order is not None
-# )
+valid_orders = (
+    order
+    for order in clean_orders
+    if order is not None
+)
 #
 # paid_orders = (
 #     order
@@ -1415,7 +1415,7 @@ class OrderNumberIterator:
 #     "PAID",
 #     "UNPAID",
 # ]
-# 
+#
 # 更清晰。
 #
 # 原则：
