@@ -2,20 +2,31 @@
 #
 # 实现：
 #
-# def generate_order_nos(
-#     prefix: str,
-#     start: int,
-#     end: int,
-# ) -> Iterator[str]:
-#     ...
+from dataclasses import dataclass
+from decimal import Decimal
+from enum import StrEnum
+from itertools import batched
+from typing import Iterator, Iterable, Callable
+
+
+def generate_order_nos(
+    prefix: str,
+    start: int,
+    end: int,
+) -> Iterator[str]:
+    for order in range(start, end + 1):
+        yield f"{prefix}-{order}"
 #
 # 调用：
 #
-# generate_order_nos(
-#     "ORDER",
-#     1,
-#     3,
-# )
+# if __name__ == '__main__':
+#     iter_rows = generate_order_nos(
+#         "ORDER",
+#         1,
+#         3,
+#     )
+#     for row in iter_rows:
+#         print(row)
 #
 # 依次产生：
 #
@@ -30,42 +41,77 @@
 #
 # 实现：
 #
-# def iter_large_orders(
-#     orders: Iterable[Order],
-#     min_amount: Decimal,
-# ) -> Iterator[Order]:
-#     ...
+@dataclass(kw_only=True)
+class Order:
+    order_no: str
+    status: OrderStatus
+    price: Decimal
+    amount: Decimal
+
+def iter_large_orders(
+    orders_rows: Iterable[Order],
+    min_amount: Decimal,
+) -> Iterator[Order]:
+    for order in orders_rows:
+        if order.amount > min_amount:
+            yield order
 #
 # 要求：
 #
 # amount >= min_amount
 #
 # 才 yield。
+
+# if __name__ == '__main__':
+#     orders = [
+#         Order(order_no = "order1", price = Decimal("1.00"), amount = Decimal("1.00")),
+#         Order(order_no = "order2", price = Decimal("2.00"), amount = Decimal("2.00"))
+#     ]
 #
+#     iter_large_order_rows = iter_large_orders(orders, min_amount = Decimal("1.00"))
+#     for order in iter_large_order_rows:
+#         print(order)
+
 # 五十八、作业 3：流式状态过滤
 #
 # 实现：
 #
-# def iter_orders_by_status(
-#     orders: Iterable[Order],
-#     status: OrderStatus,
-# ) -> Iterator[Order]:
-#     ...
+class OrderStatus(StrEnum):
+    PENDING = "PENDING"
+    PAID = "PAID"
+
+def iter_orders_by_status(
+    orders: Iterable[Order],
+    status: OrderStatus,
+) -> Iterator[Order]:
+    for order in orders:
+        if order["status"] == OrderStatus.PAID:
+            yield order
 #
 # 不能返回 list。
 #
 # 必须：
 #
 # yield
+# if __name__ == '__main__':
+#     orders = [
+#         Order(order_no = "order1", status = OrderStatus.PAID, price = Decimal("1.00"), amount = Decimal("1.00")),
+#         Order(order_no = "order2", status = OrderStatus.PENDING, price = Decimal("2.00"), amount = Decimal("2.00"))
+#     ]
+#     iter_order_rows_by_status = iter_orders_by_status(orders, OrderStatus.PAID)
+#     for order in iter_order_rows_by_status:
+#         print(order)
+
 # 五十九、作业 4：分页模拟
 #
 # 实现：
 #
-# def iter_orders_by_page(
-#     pages: list[list[Order]],
-# ) -> Iterator[Order]:
-#     ...
-#
+def iter_orders_by_page(
+    pages: list[list[Order]],
+) -> Iterator[Order]:
+    for page in pages:
+        yield from page
+
 # 例如：
 #
 # pages = [
@@ -87,6 +133,21 @@
 # 使用：
 #
 # yield from
+
+# if __name__ == '__main__':
+#     pages = [
+#         [
+#             Order(order_no="order1", status=OrderStatus.PAID, price=Decimal("1.00"), amount=Decimal("1.00")),
+#             Order(order_no="order2", status=OrderStatus.PENDING, price=Decimal("2.00"), amount=Decimal("2.00"))
+#         ],
+#         [
+#             Order(order_no="order3", status=OrderStatus.PAID, price=Decimal("3.00"), amount=Decimal("3.00"))
+#         ]
+#     ]
+#
+#     for order in iter_orders_by_page(pages):
+#         print(order.order_no)
+
 # 六十、作业 5：批处理
 #
 # 使用：
@@ -95,10 +156,14 @@
 #
 # 实现：
 #
-# def process_in_batches(
-#     orders: Iterable[Order],
-#     batch_size: int,
-# ) -> None:
+def process_in_batches(
+    orders: Iterable[Order],
+    batch_size: int,
+) -> None:
+    for index, batch in enumerate(batched(orders, batch_size), start=1):
+        print(f"第{index}批：{len(batch)}个")
+
+
 #
 # 例如：
 #
@@ -110,6 +175,14 @@
 # 第1批：2个
 # 第2批：2个
 # 第3批：1个
+# if __name__ == '__main__':
+#     orders = [
+#         Order(order_no="order1", status=OrderStatus.PAID, price=Decimal("1.00"), amount=Decimal("1.00")),
+#         Order(order_no="order2", status=OrderStatus.PENDING, price=Decimal("2.00"), amount=Decimal("2.00")),
+#         Order(order_no="order3", status=OrderStatus.PENDING, price=Decimal("3.00"), amount=Decimal("3.00"))
+#     ]
+#     process_in_batches(orders, 2)
+
 # 六十一、作业 6：完整流式 pipeline
 #
 # 实现：
@@ -139,15 +212,54 @@
 # 核心目标就是：
 #
 # 全链路惰性。
-#
+from collections.abc import Iterable
+from itertools import batched
+from decimal import Decimal
+
+def process_order_pipeline(
+    orders: Iterable[Order],
+) -> None:
+    # 1. 过滤非法订单
+    valid_orders = (
+        order
+        for order in orders
+        if order is not None
+    )
+
+    # 2. 过滤 PAID
+    paid_orders = (
+        order
+        for order in valid_orders
+        if order.status == OrderStatus.PAID
+    )
+
+    # 3. 过滤金额 >= 100
+    high_value_orders = (
+        order
+        for order in paid_orders
+        if order.amount >= Decimal("100")
+    )
+
+    # 4. 每 100 条一批
+    batches = batched(high_value_orders, 100)
+
+    # 5. 打印批次
+    for index, batch in enumerate(batches, start=1):
+        print(f"第{index}批：{len(batch)}个订单")
+
 # 六十二、加分题
 #
 # 写：
 #
-# def first_matching_order(
-#     orders: Iterable[Order],
-#     predicate: Callable[[Order], bool],
-# ) -> Order | None:
+def first_matching_order(
+    orders: Iterable[Order],
+    predicate: Callable[[Order], bool],
+) -> Order | None:
+    return next(
+        (order for order in orders if predicate(order)),
+        None,
+    )
+
 #
 # 要求使用：
 #
@@ -156,7 +268,17 @@
 # 而不是手写：
 #
 # for
-
+if __name__ == '__main__':
+    orders = [
+        Order(order_no="order1", status=OrderStatus.PAID, price=Decimal("1.00"), amount=Decimal("1.00")),
+        Order(order_no="order2", status=OrderStatus.PENDING, price=Decimal("2.00"), amount=Decimal("2.00")),
+        Order(order_no="order3", status=OrderStatus.PENDING, price=Decimal("3.00"), amount=Decimal("3.00"))
+    ]
+    result = first_matching_order(
+        orders,
+        lambda order: order.status == OrderStatus.PAID,
+    )
+    print(result)
 
 
 # 六十三、今天必须记住
