@@ -1176,23 +1176,40 @@
 #
 # ABC：
 #
-# from abc import ABC, abstractmethod
+from abc import ABC, abstractmethod
+from asyncio import Protocol
+from dataclasses import dataclass
+from typing import TypedDict, Any
+
+
 #
 #
-# class PaymentGateway(ABC):
-#
-#     @abstractmethod
-#     def pay(
-#         self,
-#         order: Order,
-#     ) -> bool:
-#         ...
+@dataclass
+class Order:
+    order_id: str
+
+class PaymentGateway(ABC):
+
+    @abstractmethod
+    def pay(
+        self,
+        order: Order,
+    ) -> bool:
+        return True
 #
 # 实现必须：
 #
-# class PayPalGateway(
-#     PaymentGateway
-# ):
+class PayPalGateway(
+    PaymentGateway
+):
+    def pay(
+        self,
+        order: Order,
+    ) -> bool:
+        return False
+
+pay = PayPalGateway()
+print(pay.pay(Order("abc")))
 #     ...
 #
 # 这是：
@@ -1270,29 +1287,29 @@
 #
 # Repository 特别典型：
 #
-# class Repository[T](
-#     Protocol
-# ):
-#     def save(
-#         self,
-#         entity: T,
-#     ) -> None:
-#         ...
-#
-#     def find_by_id(
-#         self,
-#         entity_id: int,
-#     ) -> T | None:
-#         ...
+class Repository[T](
+    Protocol
+):
+    def save(
+        self,
+        entity: T,
+    ) -> None:
+        ...
+
+    def find_by_id(
+        self,
+        entity_id: int,
+    ) -> T | None:
+        ...
 #
 # 订单：
 #
-# def process_order(
-#     repository: Repository[Order],
-# ) -> None:
-#     order = repository.find_by_id(
-#         1001
-#     )
+def process_order(
+    repository: Repository[Order],
+) -> None:
+    order = repository.find_by_id(
+        1001
+    )
 #
 # 这里类型检查器知道：
 #
@@ -1410,14 +1427,14 @@
 #
 # 例如 Shopify 原始数据：
 #
-# class RawOrder(
-#     TypedDict,
-#     total=False,
-# ):
-#     order_no: str
-#     price: str
-#     quantity: int
-#     status: str
+class RawOrder(
+    TypedDict,
+    total=False,
+):
+    order_no: str
+    price: str
+    quantity: int
+    status: str
 #
 # 这里：
 #
@@ -1492,13 +1509,13 @@
 #
 # 你已经写过：
 #
-# from collections.abc import Callable
+from collections.abc import Callable
 #
 #
-# predicate: Callable[
-#     [Order],
-#     bool,
-# ]
+predicate: Callable[
+    [Order],
+    bool,
+]
 #
 # 意思：
 #
@@ -1514,9 +1531,10 @@
 #
 # 你以前的装饰器：
 #
-# def log_execution(
-#     func: Callable[..., Any],
-# ) -> Callable[..., Any]:
+def log_execution(
+    func: Callable[..., Any],
+) -> Callable[..., Any]:
+    ...
 #
 # 意思基本是：
 #
@@ -1530,10 +1548,10 @@
 #
 # 例如原函数：
 #
-# def get_order(
-#     order_no: str,
-# ) -> Order:
-#     ...
+def get_order(
+    order_no: str,
+) -> Order:
+    ...
 #
 # 经过装饰器：
 #
@@ -1587,38 +1605,37 @@
 #
 # 可以这样写：
 #
-# from collections.abc import Callable
-# from functools import wraps
-#
-#
-# def log_execution[**P, R](
-#     func: Callable[P, R],
-# ) -> Callable[P, R]:
-#
-#     @wraps(func)
-#     def wrapper(
-#         *args: P.args,
-#         **kwargs: P.kwargs,
-#     ) -> R:
-#         print(
-#             f"开始执行："
-#             f"{func.__name__}"
-#         )
-#
-#         result = func(
-#             *args,
-#             **kwargs,
-#         )
-#
-#         print(
-#             f"执行完成："
-#             f"{func.__name__}"
-#         )
-#
-#         return result
-#
-#     return wrapper
-#
+from collections.abc import Callable
+from functools import wraps
+
+def log_execution[**P, R](
+    func: Callable[P, R],
+) -> Callable[P, R]:
+
+    @wraps(func)
+    def wrapper(
+        *args: P.args,
+        **kwargs: P.kwargs,
+    ) -> R:
+        print(
+            f"开始执行："
+            f"{func.__name__}"
+        )
+
+        result = func(
+            *args,
+            **kwargs,
+        )
+
+        print(
+            f"执行完成："
+            f"{func.__name__}"
+        )
+
+        return result
+
+    return wrapper
+
 # 这一段很高级，我们拆开。
 
 

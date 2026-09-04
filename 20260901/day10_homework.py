@@ -6,6 +6,15 @@
 #     items: list[T],
 # ) -> T | None:
 #     ...
+from collections.abc import Callable
+from dataclasses import dataclass
+from functools import wraps
+from typing import Protocol, TypedDict, Any
+
+
+def first_one[T](items: list[T]) -> T | None:
+    return items[0] if items else None
+
 #
 # 测试：
 #
@@ -31,7 +40,26 @@
 #
 # PageResult[Order]
 # PageResult[str]
+@dataclass
+class Order:
+    order_id: int
 
+@dataclass(slots=True)
+class PageResult[T]:
+    items: list[T]
+    page: int
+    page_size: int
+    total: int
+
+pages = PageResult[Order](
+    items=[
+        Order(1),
+        Order(2),
+    ],
+    page=1,
+    page_size=20,
+    total=100,
+)
 
 # 六十六、作业 3：PaymentGateway Protocol
 #
@@ -62,7 +90,21 @@
 #     gateway: PaymentGateway,
 # ) -> bool:
 #     ...
+class PaymentGateway(Protocol):
+    def pay(self, order: Order) -> bool:
+        return False
 
+class WxPaymentGateway():
+    def pay(self, order: Order) -> bool:
+        return True
+
+def pay_order(
+        order: Order,
+        payment: PaymentGateway,
+) -> bool:
+    return payment.pay(order)
+
+print(pay_order(Order(1), WxPaymentGateway()))
 
 # 六十七、作业 4：Repository Protocol
 #
@@ -91,6 +133,47 @@
 # 内部使用：
 #
 # dict[int, Order]
+class Repository[T](Protocol):
+
+    def save(
+        self,
+        entity: T,
+    ) -> None:
+        ...
+
+    def find_by_id(
+        self,
+        entity_id: int,
+    ) -> T | None:
+        ...
+
+
+class MemoryOrderRepository:
+
+    def __init__(self) -> None:
+        self._data: dict[int, Order] = {}
+
+    def save(
+        self,
+        entity: Order,
+    ) -> None:
+        self._data[entity.order_id] = entity
+
+    def find_by_id(
+        self,
+        entity_id: int,
+    ) -> Order | None:
+        return self._data.get(entity_id)
+
+repository = MemoryOrderRepository()
+
+repository.save(
+    Order(1001)
+)
+
+order = repository.find_by_id(1001)
+
+print(order)
 
 
 # 六十八、作业 5：TypedDict
@@ -117,6 +200,20 @@
 #     raw_order: RawOrder,
 # ) -> Order | None:
 #     ...
+class RawOrder(
+    TypedDict,
+    total=False,
+):
+    order_no: str
+    sku: str
+    price: str
+    quantity: int | str
+    status: str
+
+def clean_order(
+    raw_order: RawOrder,
+) -> Order | None:
+    ...
 
 
 # 六十九、作业 6：升级装饰器
@@ -144,6 +241,19 @@
 #     ...
 #
 # 这是今天含金量最高的一道作业。
+def log_execution[**P, R](func: Callable[P, R]) -> Callable[P, R]:
+    @wraps(func)
+    def wrapper(*args: P.args, **kwargs: P.kwargs) -> R:
+        print("start execution")
+        result = func(*args, **kwargs)
+        return result
+    return wrapper
+
+@log_execution
+def pay():
+    print("pay")
+
+pay()
 
 
 # 七十、加分题
@@ -174,6 +284,52 @@
 # Serializer[Order]
 #
 # 完整工作。
+import json
+
+
+class Serializer[T](Protocol):
+
+    def serialize(
+        self,
+        value: T,
+    ) -> str:
+        ...
+
+    def deserialize(
+        self,
+        value: str,
+    ) -> T:
+        ...
+
+
+class OrderSerializer:
+
+    def serialize(
+        self,
+        value: Order,
+    ) -> str:
+        return json.dumps({
+            "order_id": value.order_id,
+        })
+
+    def deserialize(
+        self,
+        value: str,
+    ) -> Order:
+        data = json.loads(value)
+        return Order(
+            order_id=data["order_id"],
+        )
+
+serializer: Serializer[Order] = (
+    OrderSerializer()
+)
+
+text = serializer.serialize(
+    Order(1001)
+)
+
+print(text)
 
 
 # 七十一、今天必须彻底搞懂的对应关系
