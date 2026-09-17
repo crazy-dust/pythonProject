@@ -10,19 +10,75 @@ from dataclasses import dataclass
 # 练习 1：协程与并发（重点）
 # 写 5 个协程，每个等待 1 秒并返回编号；分别用顺序 await 和 gather，观察总
 # 耗时，并解释为什么一个约 5 秒、一个约 1 秒。
-#
+async def numbered_work2(num : int) -> int:
+    await asyncio.sleep(1)
+    return num
+
+async def main() -> None:
+    test_nums = [await numbered_work2(i) for i in range(1, 6)]
+    print(test_nums)
+
+asyncio.gather(*(numbered_work2(i) for i in range(1, 6)))
+
+
 # 练习 2：限流（重点）
 # 模拟 20 个 HTTP 请求，每个等待 0.5 秒，用 Semaphore(4) 限制并发；证明
 # 同时进行的请求不超过 4 个。
-#
+async def semaphore_demo(
+        *,
+        request_count: int = 20,
+        limit: int  = 4,
+        delay: float = 0.5,
+) -> tuple[list[int], int]:
+    semaphore = asyncio.Semaphore(limit)
+    state_lock = asyncio.Lock()
+    active = 0
+    max_active = 0
+
+    async def request(request_id: int) -> int:
+        nonlocal active, max_active
+        async with semaphore:
+            async with state_lock:
+                active += 1
+                max_active = max(max_active, active)
+            try:
+                await asyncio.sleep(delay)
+                return request_id
+            finally:
+                async with state_lock:
+                    active -= 1
+
+    results = await asyncio.gather(*(request(i) for i in range(1, request_count + 1)))
+    return results, max_active
+
+
 # 练习 3：超时与失败隔离（重点）
-# 第 3 个请求抛出 ValueError，第 7 个请求等待 3 秒，其余等待 0.2 秒；设置
-# 1 秒超时，输出成功、失败、超时数量，保证单个失败不影响其他请求。
-#
+# 第 3 个请求抛出 ValueError，第 7 个请求等待 3 秒，其余等待 0.2 秒；
+# 设置 1 秒超时，输出成功、失败、超时数量，保证单个失败不影响其他请求。
+async def timeout_failed() -> None:
+    async def simulate_request(request_id: int) -> int:
+        if request_id == 3:
+            raise ValueError
+
+        await asyncio.sleep(3 if request_id == 7 else 0.2)
+        return request_id
+
+    async def guarded_request(request_id: int) -> int:
+        await asyncio.wait_for(simulate_request(request_id), timeout=1.0)
+        return request_id
+
+    result = asyncio.gather(*(guarded_request(i) for i in range(1, 20)), return_exceptions=True)
+    successful = sum(not isinstance(item, BaseException) for item in result)
+    failed = sum(isinstance(item, ValueError) for item in result)
+    time_out = sum(isinstance(item, TimeoutError) for item in result)
+    print(successful, failed, time_out)
+
 # 练习 4：生产者消费者
 # 使用 asyncio.Queue(maxsize=5)，一个生产者生成 100 个订单，3 个消费者处理；
 # 正确使用结束哨兵和 task_done()，确保每单恰好处理一次且程序正常退出。
-#
+
+
+
 # 练习 5：同步代码接入
 # 写一个 time.sleep(2) 的同步函数，分别直接在协程中调用和通过
 # asyncio.to_thread() 调用，对比 3 个任务耗时并解释事件循环为何不再被阻塞。

@@ -73,8 +73,7 @@ Queue 的关键规则：每次 ``get()`` 都要对应一次 ``task_done()``；``
 
 六、不要阻塞事件循环
 --------------------
-``async def`` 不会把内部代码自动变成非阻塞。直接调用 ``time.sleep``、
-``requests.get`` 或同步数据库查询，仍会阻塞整个事件循环。
+``async def`` 不会把内部代码自动变成非阻塞。直接调用 ``time.sleep``、``requests.get`` 或同步数据库查询，仍会阻塞整个事件循环。
 
 优先使用真正的异步客户端；必须接入现有同步阻塞 I/O 时，可使用
 ``await asyncio.to_thread(function, *args)``。to_thread 不是纯 Python CPU 密集
