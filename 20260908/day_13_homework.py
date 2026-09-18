@@ -76,13 +76,70 @@ async def timeout_failed() -> None:
 # 练习 4：生产者消费者
 # 使用 asyncio.Queue(maxsize=5)，一个生产者生成 100 个订单，3 个消费者处理；
 # 正确使用结束哨兵和 task_done()，确保每单恰好处理一次且程序正常退出。
+async def run_queue_demo(
+        *,
+        order_count: int = 100,
+        consumer_size: int = 3
+) -> list[int]:
+    queue: asyncio.Queue[int | None] = asyncio.Queue(maxsize=order_count)
+    processes: list[int] = []
+
+    async def producer() -> None:
+        for order_id in range(1, order_count + 1):
+            await queue.put(order_id)
+
+        # 每个消费者都有自己的结束哨兵
+        for _ in range(consumer_size):
+            await queue.put(None)
 
 
+    async def consumer() -> None:
+        while True:
+            order_id = await queue.get()
+            try:
+                if order_id is None:
+                    return
+                await asyncio.sleep(0.1)
+                processes.append(order_id)
+            finally:
+                queue.task_done()
+
+    producer_task = asyncio.create_task(producer())
+    consumer_task = [asyncio.create_task(consumer()) for _ in range(consumer_size)]
+
+    # main协程暂停，等待生产协程执行完
+    await producer_task
+    # main协程暂停，等待消费队列里面都消费完了
+    await queue.join()
+    # main协程暂停，等待消费者全部执行完
+    await asyncio.gather(*consumer_task)
+    return processes
+
+
+def call(task_id: int, delay:float = 2) -> int:
+    time.sleep(delay)
+    return task_id
 
 # 练习 5：同步代码接入
 # 写一个 time.sleep(2) 的同步函数，分别直接在协程中调用和通过
 # asyncio.to_thread() 调用，对比 3 个任务耗时并解释事件循环为何不再被阻塞。
+async def compare_sync(
+        *,
+        task_count: int = 3,
+        delay: float = 2.0
+) -> tuple[float, float]:
+    async def block_call(order_id: int) -> int:
+        return call(order_id, delay)
 
+    start_time = time.perf_counter()
+    await asyncio.gather(*(block_call(i, delay) for i in range(1, task_count + 1)))
+    time_consuming = time.perf_counter() - start_time
+
+    start_time = time.perf_counter()
+    await asyncio.gather(*(asyncio.to_thread(block_call, i, delay) for i in range(1, task_count + 1)))
+    thread_time_consuming = time.perf_counter() - start_time
+
+    return time_consuming, thread_time_consuming
 
 @dataclass(frozen=True, slots=True)
 class TimingResult:
